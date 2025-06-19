@@ -10,3 +10,4 @@ __mypy_cache__
 .coverage.*
 output/
 .env
+*.log
