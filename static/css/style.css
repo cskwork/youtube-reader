@@ -1,0 +1,192 @@
+/* Custom styles for YouTube Transcript Reader */
+
+:root {
+    --primary-color: #FF0000;
+    --secondary-color: #282828;
+    --text-color: #333;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-color);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    background-color: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Transcript Container */
+.transcript-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.transcript-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: var(--bg-light);
+    transition: background-color 0.3s ease;
+}
+
+.transcript-item:hover {
+    background-color: #e9ecef;
+}
+
+.transcript-item.highlight {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+}
+
+.timestamp {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.timestamp:hover {
+    text-decoration: underline;
+}
+
+.transcript-text {
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* Summary Container */
+.summary-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.summary-container h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.summary-container ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.summary-container ul li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 10px;
+}
+
+.summary-container ul li:before {
+    content: "▶";
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+/* Loading States */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Scrollbar Styling */
+.transcript-container::-webkit-scrollbar,
+.summary-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.transcript-container::-webkit-scrollbar-track,
+.summary-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.transcript-container::-webkit-scrollbar-thumb,
+.summary-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.transcript-container::-webkit-scrollbar-thumb:hover,
+.summary-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Search Results */
+.search-highlight {
+    background-color: #ffeb3b;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Export Buttons */
+.export-btn {
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .transcript-container,
+    .summary-container {
+        max-height: 400px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.transcript-item {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Custom Bootstrap Overrides */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #cc0000;
+    border-color: #cc0000;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+} 

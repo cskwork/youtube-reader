@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Transcript Reader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fab fa-youtube me-2"></i>YouTube Transcript Reader
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- URL Input Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Enter YouTube URL</h5>
+                <div class="input-group mb-3">
+                    <input type="text" id="youtubeUrl" class="form-control" 
+                           placeholder="https://www.youtube.com/watch?v=..." 
+                           aria-label="YouTube URL">
+                    <select id="languageSelect" class="form-select" style="max-width: 150px;">
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                        <option value="ja">日本語</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                    <button class="btn btn-primary" type="button" id="fetchTranscript">
+                        <i class="fas fa-download me-2"></i>Get Transcript
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="text-center mb-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Fetching transcript...</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+            <strong>Error!</strong> <span id="errorMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Success Alert -->
+        <div id="successAlert" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;">
+            <strong>Success!</strong> <span id="successMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="contentArea" style="display: none;">
+            <div class="row">
+                <!-- Left Panel - Transcript -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Transcript</h5>
+                            <div>
+                                <!-- Search Button -->
+                                <button class="btn btn-sm btn-outline-secondary me-2" id="searchToggle">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <!-- Export Dropdown -->
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item export-btn" href="#" data-format="txt">
+                                            Export as TXT</a></li>
+                                        <li><a class="dropdown-item export-btn" href="#" data-format="json">
+                                            Export as JSON</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Search Bar -->
+                            <div id="searchBar" class="mb-3" style="display: none;">
+                                <div class="input-group">
+                                    <input type="text" id="searchInput" class="form-control" 
+                                           placeholder="Search in transcript...">
+                                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                        Search
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                                        Clear
+                                    </button>
+                                </div>
+                                <small class="text-muted mt-1" id="searchResults"></small>
+                            </div>
+                            <!-- Transcript Content -->
+                            <div id="transcriptContent" class="transcript-container">
+                                <!-- Transcript will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Summary -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">AI Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Summary Controls -->
+                            <div class="mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <select id="llmProvider" class="form-select">
+                                            <option value="openai">OpenAI GPT</option>
+                                            <option value="anthropic">Anthropic Claude</option>
+                                            <option value="google">Google Gemini</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select id="summaryType" class="form-select">
+                                            <option value="short">Short Summary</option>
+                                            <option value="medium">Medium Summary</option>
+                                            <option value="detailed">Detailed Summary</option>
+                                            <option value="key_points">Key Points Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary w-100 mt-2" id="generateSummary">
+                                    <i class="fas fa-magic me-2"></i>Generate Summary
+                                </button>
+                            </div>
+
+                            <!-- Summary Loading -->
+                            <div id="summaryLoading" class="text-center" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Generating summary...</span>
+                                </div>
+                                <p class="mt-2">Generating summary...</p>
+                            </div>
+
+                            <!-- Summary Content -->
+                            <div id="summaryContent" class="summary-container">
+                                <p class="text-muted">Click "Generate Summary" to create an AI-powered summary of the transcript.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">YouTube Transcript Reader - Powered by AI</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 

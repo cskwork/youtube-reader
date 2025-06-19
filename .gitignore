@@ -1,0 +1,12 @@
+.venv
+__mypy_cache__
+.DS_Store
+.vscode
+.idea
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+.coverage.*
+output/
+.env
