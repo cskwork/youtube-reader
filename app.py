@@ -21,6 +21,7 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 
 # LLM 클라이언트 초기화
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
@@ -173,6 +174,39 @@ def summarize_with_google(text: str, summary_type: str = 'medium') -> str:
     except Exception as e:
         return f"Error with Google Gemini: {str(e)}"
 
+def summarize_with_ollama(text: str, summary_type: str = 'medium', model_name: str = 'llama2') -> str:
+    """Ollama를 사용한 요약"""
+    prompts = {
+        'short': "Provide a brief 3-5 sentence summary of the following transcript:",
+        'medium': "Provide a comprehensive summary (about 2-3 paragraphs) of the following transcript:",
+        'detailed': "Provide a detailed summary with key points and main topics from the following transcript:",
+        'key_points': "Extract the top 10 key points from the following transcript as a bulleted list:"
+    }
+    
+    try:
+        import ollama
+        client = ollama.Client(host=OLLAMA_HOST)
+        
+        # 사용 가능한 모델 목록 가져오기
+        available_models = [model['name'] for model in client.list()['models']]
+        if not available_models:
+            return "No models available in Ollama. Please run 'ollama pull <model_name>'."
+        
+        # 지정된 모델이 없으면 첫 번째 모델 사용
+        if f"{model_name}:latest" not in available_models:
+            model_name = available_models[0].split(':')[0]
+
+        response = client.chat(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that summarizes video transcripts."},
+                {"role": "user", "content": f"{prompts.get(summary_type, prompts['medium'])}\n\n{text[:4000]}"}
+            ]
+        )
+        return response['message']['content']
+    except Exception as e:
+        return f"Error with Ollama: {str(e)}"
+
 def format_timestamp(seconds: float) -> str:
     """초를 HH:MM:SS 형식으로 변환"""
     hours = int(seconds // 3600)
@@ -227,6 +261,8 @@ def summarize_api():
             summary = summarize_with_anthropic(text, summary_type)
         elif llm_provider == 'google':
             summary = summarize_with_google(text, summary_type)
+        elif llm_provider == 'ollama':
+            summary = summarize_with_ollama(text, summary_type, data.get('ollama_model', 'llama2'))
         else:
             summary = "Invalid LLM provider"
         
@@ -308,6 +344,35 @@ def search_transcript():
         'results': results,
         'count': len(results)
     })
+
+@app.route('/api/ollama/models', methods=['GET'])
+def get_ollama_models():
+    """Ollama에서 사용 가능한 모델 목록 가져오기"""
+    try:
+        import ollama
+        client = ollama.Client(host=OLLAMA_HOST)
+        models = client.list()
+        
+        # 모델 이름만 추출
+        model_names = []
+        for model in models.get('models', []):
+            model_name = model['name']
+            # :latest 태그 제거
+            if ':' in model_name:
+                model_name = model_name.split(':')[0]
+            if model_name not in model_names:
+                model_names.append(model_name)
+        
+        return jsonify({
+            'success': True,
+            'models': model_names
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'models': []
+        })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 

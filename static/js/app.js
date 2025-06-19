@@ -18,6 +18,8 @@ const generateSummaryBtn = document.getElementById('generateSummary');
 const summaryLoading = document.getElementById('summaryLoading');
 const llmProviderSelect = document.getElementById('llmProvider');
 const summaryTypeSelect = document.getElementById('summaryType');
+const ollamaModelGroup = document.getElementById('ollamaModelGroup');
+const ollamaModelSelect = document.getElementById('ollamaModel');
 const searchToggle = document.getElementById('searchToggle');
 const searchBar = document.getElementById('searchBar');
 const searchInput = document.getElementById('searchInput');
@@ -34,6 +36,43 @@ clearSearchBtn.addEventListener('click', clearSearch);
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchTranscript();
 });
+
+// Show/hide Ollama model input based on provider selection
+llmProviderSelect.addEventListener('change', async () => {
+    if (llmProviderSelect.value === 'ollama') {
+        ollamaModelGroup.style.display = 'block';
+        await loadOllamaModels();
+    } else {
+        ollamaModelGroup.style.display = 'none';
+    }
+});
+
+// Load available Ollama models
+async function loadOllamaModels() {
+    ollamaModelSelect.innerHTML = '<option value="">Loading models...</option>';
+    
+    try {
+        const response = await axios.get('/api/ollama/models');
+        
+        if (response.data.success && response.data.models.length > 0) {
+            ollamaModelSelect.innerHTML = '';
+            response.data.models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                ollamaModelSelect.appendChild(option);
+            });
+        } else {
+            ollamaModelSelect.innerHTML = '<option value="">No models available</option>';
+            if (!response.data.success) {
+                showError('Failed to load Ollama models: ' + response.data.error);
+            }
+        }
+    } catch (error) {
+        ollamaModelSelect.innerHTML = '<option value="">Failed to load models</option>';
+        console.error('Error loading Ollama models:', error);
+    }
+}
 
 // Export buttons
 document.querySelectorAll('.export-btn').forEach(btn => {
@@ -119,12 +158,18 @@ async function generateSummary() {
     summaryLoading.style.display = 'block';
     generateSummaryBtn.disabled = true;
     
+    const requestData = {
+        text: fullText,
+        summary_type: summaryType,
+        llm_provider: provider
+    };
+
+    if (provider === 'ollama') {
+        requestData.ollama_model = ollamaModelSelect.value || 'llama2';
+    }
+
     try {
-        const response = await axios.post('/api/summarize', {
-            text: fullText,
-            summary_type: summaryType,
-            llm_provider: provider
-        });
+        const response = await axios.post('/api/summarize', requestData);
         
         if (response.data.success) {
             summaryContent.innerHTML = response.data.summary_html;

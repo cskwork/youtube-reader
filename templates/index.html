@@ -127,6 +127,7 @@
                                             <option value="openai">OpenAI GPT</option>
                                             <option value="anthropic">Anthropic Claude</option>
                                             <option value="google">Google Gemini</option>
+                                            <option value="ollama">Ollama (Local)</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -137,6 +138,12 @@
                                             <option value="key_points">Key Points Only</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div id="ollamaModelGroup" class="mt-2" style="display: none;">
+                                    <label for="ollamaModel" class="form-label">Ollama Model</label>
+                                    <select id="ollamaModel" class="form-select">
+                                        <option value="">Loading models...</option>
+                                    </select>
                                 </div>
                                 <button class="btn btn-primary w-100 mt-2" id="generateSummary">
                                     <i class="fas fa-magic me-2"></i>Generate Summary
