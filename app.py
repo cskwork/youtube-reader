@@ -63,16 +63,32 @@ def get_transcript(video_id: str, language: str = 'en') -> Dict:
         # 트랜스크립트 데이터 가져오기
         transcript_data = transcript.fetch()
         
-        # 텍스트 포맷터로 전체 텍스트 생성
-        formatter = TextFormatter()
-        full_text = formatter.format_transcript(transcript_data)
+        # API가 반환하는 데이터가 어떤 형태이든 처리할 수 있도록 각 항목을 확인하여
+        # 일관된 딕셔너리 리스트를 생성합니다.
+        transcript_dict_list = []
+        for segment in transcript_data:
+            if isinstance(segment, dict):
+                transcript_dict_list.append({
+                    'text': segment.get('text', ''),
+                    'start': segment.get('start', 0),
+                    'duration': segment.get('duration', 0)
+                })
+            else: # It's an object
+                transcript_dict_list.append({
+                    'text': getattr(segment, 'text', ''),
+                    'start': getattr(segment, 'start', 0),
+                    'duration': getattr(segment, 'duration', 0)
+                })
+
+        # 일관되게 만들어진 딕셔너리 리스트에서 전체 텍스트를 생성합니다.
+        full_text = '\n'.join([item['text'] for item in transcript_dict_list])
         
         return {
             'success': True,
             'video_id': video_id,
             'language': transcript.language_code,
             'is_generated': transcript.is_generated,
-            'transcript_data': transcript_data,
+            'transcript_data': transcript_dict_list,
             'full_text': full_text
         }
     except Exception as e:
@@ -294,4 +310,4 @@ def search_transcript():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000) 
+    app.run(debug=True, port=5001) 
