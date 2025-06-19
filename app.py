@@ -188,13 +188,23 @@ def summarize_with_ollama(text: str, summary_type: str = 'medium', model_name: s
         client = ollama.Client(host=OLLAMA_HOST)
         
         # 사용 가능한 모델 목록 가져오기
-        available_models = [model['name'] for model in client.list()['models']]
+        response = client.list()
+        available_models = [model.model for model in response.models]
+        
         if not available_models:
             return "No models available in Ollama. Please run 'ollama pull <model_name>'."
         
+        # 모델 이름에 태그가 없으면 :latest 추가
+        if ':' not in model_name:
+            model_name_with_tag = f"{model_name}:latest"
+        else:
+            model_name_with_tag = model_name
+            
         # 지정된 모델이 없으면 첫 번째 모델 사용
-        if f"{model_name}:latest" not in available_models:
-            model_name = available_models[0].split(':')[0]
+        if model_name_with_tag not in available_models and model_name not in available_models:
+            model_name = available_models[0]
+        elif model_name_with_tag in available_models:
+            model_name = model_name_with_tag
 
         response = client.chat(
             model=model_name,
@@ -351,17 +361,16 @@ def get_ollama_models():
     try:
         import ollama
         client = ollama.Client(host=OLLAMA_HOST)
-        models = client.list()
+        response = client.list()
         
         # 모델 이름만 추출
         model_names = []
-        for model in models.get('models', []):
-            model_name = model['name']
-            # :latest 태그 제거
-            if ':' in model_name:
-                model_name = model_name.split(':')[0]
-            if model_name not in model_names:
-                model_names.append(model_name)
+        for model in response.models:
+            model_name = model.model
+            # :latest 태그 제거하고 중복 제거
+            base_name = model_name.split(':')[0]
+            if base_name not in model_names:
+                model_names.append(base_name)
         
         return jsonify({
             'success': True,
